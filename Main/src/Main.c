@@ -1,5 +1,6 @@
 #include "config.h"
 #include "image_utils.c"
+// #include <stdlib.h>
 
 #define JOYSTICK_DEAD_ZONE 10
 
@@ -11,6 +12,17 @@ int x_position = 48;
 int y_position = 0;
 unsigned int joystick_y;
 
+void initialize_system(void)
+{
+	init_devices();
+	lcd_init();
+	lcd_clear();
+	ScreenBuffer_clear();
+	UART_init(); // Initialize UART1
+	sei();		 // Enable global interrupts (though not strictly needed in polling mode)
+	GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
+}
+
 void update_spaceship_position(void)
 {
 	joystick_y = 127 - Read_Adc_Data(4) / 8;
@@ -20,9 +32,9 @@ void update_spaceship_position(void)
 		y_position += (joystick_y > 63) ? 2 : -2; // change speed by changing the increment value
 	}
 
-	if (y_position > 111)
+	if (y_position > 112)
 	{
-		y_position = 111;
+		y_position = 112;
 	}
 	else if (y_position < 0)
 	{
@@ -30,23 +42,35 @@ void update_spaceship_position(void)
 	}
 }
 
-void main(void)
+void draw_spaceship(void)
 {
-	init_devices();
-	lcd_init();
 	lcd_clear();
 	ScreenBuffer_clear();
-
 	GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
+}
 
+void handle_spaceship_movement(void)
+{
+	update_spaceship_position();
+	draw_spaceship();
+	_delay_ms(75);
+}
+
+void main_loop(void)
+{
+	UART_send_string("UART Communication Initialized...\n");
 	while (1)
 	{
-		update_spaceship_position();
+		handle_spaceship_movement();
 
-		lcd_clear();
-		ScreenBuffer_clear();
-		GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
-
-		_delay_ms(75);
+		// unsigned char received_data = UART_receive();
+		// UART_transmit(received_data);
+		// UART_send_string("\nData received and echoed back.\n");
 	}
+}
+
+void main(void)
+{
+	initialize_system();
+	main_loop();
 }
