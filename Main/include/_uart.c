@@ -254,25 +254,3 @@ void UART_send_string(const char *str)
 		UART_transmit(*str++);
 	}
 }
-
-// Interrupt Service Routine (ISR) for receiving data
-ISR(USART1_RX_vect)
-{
-	static char buffer[MAX_BUFFER_SIZE];
-	static unsigned char index = 0;
-	unsigned char received_data = UDR1;
-
-	if (received_data == '\r' || received_data == '\n')
-	{
-		buffer[index] = '\0';
-		UART_send_string(buffer);
-		index = 0;
-	}
-	else
-	{
-		if (index < MAX_BUFFER_SIZE - 1)
-		{
-			buffer[index++] = received_data;
-		}
-	}
-}

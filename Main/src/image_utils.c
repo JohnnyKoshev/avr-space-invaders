@@ -31,7 +31,7 @@ void GLCD_DrawImageWithRotation(unsigned char xStart, unsigned char yStart, unsi
         for (x = 0; x < width; x++)
         {
             byte = image[y * (width / 8) + (x / 8)]; // Determine the byte for the current column
-            bit = 1 << (7 - (x % 8));                 // Calculate the bit position
+            bit = 1 << (7 - (x % 8));                // Calculate the bit position
 
             if (byte & bit)
             {
