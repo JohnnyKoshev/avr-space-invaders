@@ -63,18 +63,6 @@ void draw_stars(void)
     }
 }
 
-void init_graphics(void)
-{
-    for (int i = 0; i < STAR_COUNT; i++)
-    {
-        star_positions[i][0] = 5 + rand() % 60;
-        star_positions[i][1] = 5 + rand() % 116;
-    }
-
-    GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
-}
-
-
 void update_spaceship_position(void)
 {
     joystick_y = 127 - Read_Adc_Data(4) / 8;
@@ -92,6 +80,46 @@ void update_spaceship_position(void)
     {
         y_position = 0;
     }
+}
+
+void update_alien_ufo_positions(void)
+{
+    for (int i = 0; i < ALIEN_UFO_COUNT; i++)
+    {
+        alien_ufo_positions[i][1] += alien_ufo_positions[i][2]; // Update x position based on direction
+
+        if (alien_ufo_positions[i][1] < 0 || alien_ufo_positions[i][1] > 116)
+        {
+            alien_ufo_positions[i][2] *= -1; // Change direction if it hits the boundary
+            alien_ufo_positions[i][0] += 10; // Move down a row
+        }
+
+        if (alien_ufo_positions[i][0] > 60)
+        {
+            alien_ufo_positions[i][0] = 5; // Reset to top if it goes out of screen
+        }
+    }
+}
+
+void draw_aliens_and_ufos(void)
+{
+    for (int i = 0; i < ALIEN_UFO_COUNT; i++)
+    {
+        if (i % 2 == 0)
+        {
+            GLCD_DrawImageWithRotation(alien_ufo_positions[i][0], alien_ufo_positions[i][1], ufo16n16, 16, 16, ROTATE_90);
+        }
+        else
+        {
+            GLCD_DrawImageWithRotation(alien_ufo_positions[i][0], alien_ufo_positions[i][1], alien16n16, 16, 16, ROTATE_90);
+        }
+    }
+}
+
+void render_aliens_and_ufos(void)
+{
+    update_alien_ufo_positions();
+    draw_aliens_and_ufos();
 }
 
 void draw_spaceship(void)
@@ -117,6 +145,25 @@ void handle_movement(void)
 {
     render_spaceship();
     render_stars();
+    render_aliens_and_ufos();
 
     _delay_ms(100);
+}
+
+void init_graphics(void)
+{
+    for (int i = 0; i < STAR_COUNT; i++)
+    {
+        star_positions[i][0] = 5 + rand() % 60;
+        star_positions[i][1] = 5 + rand() % 116;
+    }
+
+    for (int i = 0; i < ALIEN_UFO_COUNT; i++)
+    {
+        alien_ufo_positions[i][0] = rand() % 60;
+        alien_ufo_positions[i][1] = 5 + (i * 10);
+        alien_ufo_positions[i][2] = (i % 2 == 0) ? 1 : -1; // Initial direction
+    }
+
+    GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
 }

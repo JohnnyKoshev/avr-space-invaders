@@ -19,3 +19,9 @@ unsigned int joystick_y;
 #define STAR_MIN_DISTANCE 20
 #define STAR_COUNT 5
 int star_positions[STAR_COUNT][2];
+
+
+
+#define ALIEN_UFO_COUNT 5
+int star_positions[STAR_COUNT][2];
+int alien_ufo_positions[ALIEN_UFO_COUNT][3]; // [x, y, direction (1 for right, -1 for left)]
