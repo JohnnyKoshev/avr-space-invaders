@@ -68,17 +68,17 @@ void update_alien_ufo_positions(void)
 {
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        alien_ufo_positions[i][1] += alien_ufo_positions[i][2];
+        alien_ufo_positions[i].y += alien_ufo_positions[i].speed;
 
-        if (alien_ufo_positions[i][1] < 0 || alien_ufo_positions[i][1] > 116)
+        if (alien_ufo_positions[i].y < 0 || alien_ufo_positions[i].y > 116)
         {
-            alien_ufo_positions[i][2] *= -1; 
-            alien_ufo_positions[i][0] += 10; 
+            alien_ufo_positions[i].speed *= -1; 
+            alien_ufo_positions[i].x += 10; 
         }
 
-        if (alien_ufo_positions[i][0] > 60)
+        if (alien_ufo_positions[i].x > 60)
         {
-            alien_ufo_positions[i][0] = 5; 
+            alien_ufo_positions[i].x = 5; 
         }
     }
 }
@@ -87,13 +87,16 @@ void draw_aliens_and_ufos(void)
 {
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        if (i % 2 == 0)
+        if (alien_ufo_positions[i].health > 0)
         {
-            GLCD_DrawImageWithRotation(alien_ufo_positions[i][0], alien_ufo_positions[i][1], ufo16n16, 16, 16, ROTATE_90);
-        }
-        else
-        {
-            GLCD_DrawImageWithRotation(alien_ufo_positions[i][0], alien_ufo_positions[i][1], alien16n16, 16, 16, ROTATE_90);
+            if (i % 2 == 0)
+            {
+                GLCD_DrawImageWithRotation(alien_ufo_positions[i].x, alien_ufo_positions[i].y, ufo16n16, 16, 16, ROTATE_90);
+            }
+            else
+            {
+                GLCD_DrawImageWithRotation(alien_ufo_positions[i].x, alien_ufo_positions[i].y, alien16n16, 16, 16, ROTATE_90);
+            }
         }
     }
 }
@@ -175,10 +178,27 @@ void update_bullets(void)
             {
                 bullets[i].active = 0;
             }
+
+            for (int j = 0; j < ALIEN_UFO_COUNT; j++)
+            {
+                if (alien_ufo_positions[j].health > 0 &&
+                    bullets[i].active &&
+                    bullets[i].x >= alien_ufo_positions[j].x && bullets[i].x <= alien_ufo_positions[j].x + 16 &&
+                    bullets[i].y >= alien_ufo_positions[j].y && bullets[i].y <= alien_ufo_positions[j].y + 16)
+                {
+                    alien_ufo_positions[j].health -= 1;
+                    bullets[i].active = 0;
+
+                    if (alien_ufo_positions[j].health <= 0)
+                    {
+                        // Alien or UFO destroyed
+                        alien_ufo_positions[j].x = -20; // Move off-screen
+                    }
+                }
+            }
         }
     }
 }
-
 void draw_bullets(void)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -207,14 +227,16 @@ void init_graphics(void)
 
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        alien_ufo_positions[i][0] = rand() % 60;
-        alien_ufo_positions[i][1] = 5 + (i * 10);
-        alien_ufo_positions[i][2] = (i % 2 == 0) ? 1 : -1; 
+        alien_ufo_positions[i].x = rand() % 60;
+        alien_ufo_positions[i].y = 5 + (i * 10);
+        alien_ufo_positions[i].speed = (i % 2 == 0) ? 1 : -1; 
+        alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5; // UFOs have 2 health, Aliens have 3 health
     }
 
     GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
     initialize_bullets();
 }
+
 
 void handle_movement(void)
 {
