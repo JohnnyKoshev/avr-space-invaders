@@ -1,6 +1,9 @@
 #include "config.h"
 #include "image_utils.c"
 #include "render.c"
+#include "init.c"
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
 #define MAX_BUFFER_SIZE 64
 
@@ -25,28 +28,78 @@ ISR(USART1_RX_vect)
 	}
 }
 
+// ISR(INT0_vect)
+// {
+//     // Check if the interrupt was caused by the joystick button press
+//     if (is_joystick_button_pressed())
+//     {
+//         turn_on_all_leds();
+//         _delay_ms(500);
+//         turn_off_all_leds();
+//         fire_bullet();
+//     }
+// }
+
+// // Check if the joystick button is pressed
+int is_joystick_button_pressed()
+{
+	return !(PINC & (1 << PC2)); // Return 1 if button is pressed (PC2 is low), 0 if not (PC2 is high)
+}
+
+// // Check if the touch sensor is activated
+int is_touch_sensor_activated()
+{
+	return !(PINC & (1 << PC3)); // Return 1 if touch is detected (PC3 is low), 0 if not (PC3 is high)
+}
+
+int is_button_pressed(void)
+{
+	return !(PIND & (1 << PD3)); // Return 1 if PD3 is low (button pressed), 0 if not pressed (PD3 is high)
+}
+
 void initialize_system(void)
 {
-	init_devices();
-	lcd_init();
+	initialize_devices();
 	lcd_clear();
 	ScreenBuffer_clear();
 	UART_init();
-	sei();
 
 	init_graphics();
+
+
+}
+
+
+void turn_on_led(uint8_t led_number)
+{
+    if (led_number < 8) 
+    {
+        PORTB = ~(1 << led_number); 
+    }
+}
+
+void turn_on_all_leds(void)
+{
+	PORTB = 0x00;
+}
+
+void turn_off_all_leds(void)
+{
+	PORTB = 0xFF;
 }
 
 void main_loop(void)
 {
+	sei();
 	UART_send_string("UART Communication Initialized...\n");
 	while (1)
 	{
-		handle_movement();
+		if (is_joystick_button_pressed() )
+		{
+			fire_bullet();
+		}
 
-		// unsigned char received_data = UART_receive();
-		// UART_transmit(received_data);
-		// UART_send_string("\nData received and echoed back.\n");
+		handle_movement();
 	}
 }
 

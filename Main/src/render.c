@@ -1,4 +1,5 @@
 #include "def.h"
+#include "_glcd.h"
 
 void DrawStar(unsigned char x, unsigned char y)
 {
@@ -63,40 +64,21 @@ void draw_stars(void)
     }
 }
 
-void update_spaceship_position(void)
-{
-    joystick_y = 127 - Read_Adc_Data(4) / 8;
-
-    if (abs(joystick_y - 63) > JOYSTICK_DEAD_ZONE)
-    {
-        y_position += (joystick_y > 63) ? 2 : -2; // change speed by changing the increment value
-    }
-
-    if (y_position > 112)
-    {
-        y_position = 112;
-    }
-    else if (y_position < 0)
-    {
-        y_position = 0;
-    }
-}
-
 void update_alien_ufo_positions(void)
 {
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        alien_ufo_positions[i][1] += alien_ufo_positions[i][2]; // Update x position based on direction
+        alien_ufo_positions[i][1] += alien_ufo_positions[i][2];
 
         if (alien_ufo_positions[i][1] < 0 || alien_ufo_positions[i][1] > 116)
         {
-            alien_ufo_positions[i][2] *= -1; // Change direction if it hits the boundary
-            alien_ufo_positions[i][0] += 10; // Move down a row
+            alien_ufo_positions[i][2] *= -1; 
+            alien_ufo_positions[i][0] += 10; 
         }
 
         if (alien_ufo_positions[i][0] > 60)
         {
-            alien_ufo_positions[i][0] = 5; // Reset to top if it goes out of screen
+            alien_ufo_positions[i][0] = 5; 
         }
     }
 }
@@ -122,6 +104,25 @@ void render_aliens_and_ufos(void)
     draw_aliens_and_ufos();
 }
 
+void update_spaceship_position(void)
+{
+    joystick_y = 127 - Read_Adc_Data(4) / 8;
+
+    if (abs(joystick_y - 63) > JOYSTICK_DEAD_ZONE)
+    {
+        y_position += (joystick_y > 63) ? 2 : -2; // change speed by changing the increment value
+    }
+
+    if (y_position > 112)
+    {
+        y_position = 112;
+    }
+    else if (y_position < 0)
+    {
+        y_position = 0;
+    }
+}
+
 void draw_spaceship(void)
 {
     lcd_clear();
@@ -141,14 +142,60 @@ void render_stars(void)
     draw_stars();
 }
 
-void handle_movement(void)
+void initialize_bullets(void)
 {
-    render_spaceship();
-    render_stars();
-    render_aliens_and_ufos();
-
-    _delay_ms(100);
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        bullets[i].active = 0;
+    }
 }
+
+void fire_bullet(void)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (!bullets[i].active)
+        {
+            bullets[i].y = y_position + 8;
+            bullets[i].x = x_position;     
+            bullets[i].active = 1;
+            break;
+        }
+    }
+}
+
+void update_bullets(void)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            bullets[i].x -= 2; 
+            if (bullets[i].x < 0)
+            {
+                bullets[i].active = 0;
+            }
+        }
+    }
+}
+
+void draw_bullets(void)
+{
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (bullets[i].active)
+        {
+            GLCD_Line(bullets[i].x, bullets[i].y, bullets[i].x + 3, bullets[i].y);
+        }
+    }
+}
+
+void render_bullets(void)
+{
+    update_bullets();
+    draw_bullets();
+}
+
 
 void init_graphics(void)
 {
@@ -162,8 +209,19 @@ void init_graphics(void)
     {
         alien_ufo_positions[i][0] = rand() % 60;
         alien_ufo_positions[i][1] = 5 + (i * 10);
-        alien_ufo_positions[i][2] = (i % 2 == 0) ? 1 : -1; // Initial direction
+        alien_ufo_positions[i][2] = (i % 2 == 0) ? 1 : -1; 
     }
 
     GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
+    initialize_bullets();
+}
+
+void handle_movement(void)
+{
+    render_spaceship();
+    render_stars();
+    render_aliens_and_ufos();
+    render_bullets();
+
+    _delay_ms(125);
 }

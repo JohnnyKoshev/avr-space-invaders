@@ -20,8 +20,22 @@ unsigned int joystick_y;
 #define STAR_COUNT 5
 int star_positions[STAR_COUNT][2];
 
-
-
 #define ALIEN_UFO_COUNT 5
 int star_positions[STAR_COUNT][2];
 int alien_ufo_positions[ALIEN_UFO_COUNT][3]; // [x, y, direction (1 for right, -1 for left)]
+
+#define JOYSTICK_BUTTON_PIN PIND2
+#define JOYSTICK_BUTTON_PORT PORTD
+#define JOYSTICK_BUTTON_DDR DDRD
+#define JOYSTICK_BUTTON_PINR PIND
+
+#define MAX_BULLETS 3 // Max number of bullets on screen at once
+
+typedef struct
+{
+    int x;      // Bullet's x-position
+    int y;      // Bullet's y-position
+    int active; // Whether the bullet is active (0 for inactive, 1 for active)
+} Bullet;
+
+Bullet bullets[MAX_BULLETS]; // Array of bullets
