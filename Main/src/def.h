@@ -55,3 +55,14 @@ AlienUFO alien_ufo_positions[ALIEN_UFO_COUNT];
 int spaceship_health = 3;
 
 int GAME_STATE = 1;
+
+#define LIGHT_DETECTION_THRESHOLD 512  // Threshold for detecting light
+#define BONUS_STAR_X 30  // X-position for bonus star (or randomize it)
+#define BONUS_STAR_Y 60  // Y-position for bonus star (or randomize it)
+#define DEBOUNCE_DELAY 500  // Delay in milliseconds for debounce
+
+#define BONUS_STAR_SPEED 1   // Speed at which the bonus star falls
+
+static int bonus_star_x = 0;  // Bonus star starting from the top (x = 0)
+static int bonus_star_y = 0;  // Randomized starting y position for the bonus star
+static int bonus_star_active = 0;  // Flag to track if the bonus star is active

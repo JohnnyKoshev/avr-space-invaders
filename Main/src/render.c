@@ -7,6 +7,12 @@ void DrawStar(unsigned char x, unsigned char y)
     GLCD_Line(x - 2, y, x + 2, y);
 }
 
+void DrawBonusStar(unsigned char x, unsigned char y)
+{
+    DrawStar(x, y);
+    GLCD_Circle(x, y, 2);
+}
+
 int are_stars_overlapping(int star1_x, int star1_y, int star2_x, int star2_y)
 {
 
@@ -60,6 +66,14 @@ void turn_on_led(uint8_t led_number)
     if (led_number < 8)
     {
         PORTB &= ~(1 << led_number);
+    }
+}
+
+void turn_off_led(uint8_t led_number)
+{
+    if (led_number < 8)
+    {
+        PORTB |= (1 << led_number);
     }
 }
 
@@ -233,6 +247,7 @@ void render_bullets(void)
     update_bullets();
     draw_bullets();
 }
+
 void check_collisions_with_spaceship(void)
 {
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
@@ -241,7 +256,16 @@ void check_collisions_with_spaceship(void)
             x_position >= alien_ufo_positions[i].x && x_position <= alien_ufo_positions[i].x + 10 &&
             y_position >= alien_ufo_positions[i].y && y_position <= alien_ufo_positions[i].y + 10)
         {
-            spaceship_health -= 1;             // Decrease spaceship health
+            // Check if it's an alien or a UFO and reduce health accordingly
+            if (i % 2 == 0) // UFO (even index)
+            {
+                spaceship_health -= 1; // UFO reduces health by 1
+            }
+            else // Alien (odd index)
+            {
+                spaceship_health -= 2; // Alien reduces health by 2
+            }
+
             alien_ufo_positions[i].health = 0; // Destroy the alien/UFO
             alien_ufo_positions[i].x = -20;    // Move it off-screen
 
@@ -308,6 +332,84 @@ void display_lives_with_leds(void)
     // This assumes the first LED corresponds to bit 0, the second to bit 1, etc.
 }
 
+void detect_light_intensity(void)
+{
+    uint16_t light_value = Read_Adc_Data(2);
+
+    if (light_value > LIGHT_DETECTION_THRESHOLD)
+    {
+        if (!bonus_star_active)
+        {
+            generate_bonus_star();
+        }
+    }
+}
+
+// Function to generate a bonus star
+void generate_bonus_star(void)
+{
+
+    bonus_star_y = 5 + rand() % 116;
+
+    bonus_star_x = 3;
+
+    bonus_star_active = 1;
+}
+
+// Function to update the position of the bonus star as it falls
+void update_bonus_star_position(void)
+{
+    if (bonus_star_active)
+    {
+        // Move the bonus star downwards
+        bonus_star_x += BONUS_STAR_SPEED;
+
+        // If it reaches the bottom of the screen, reset it
+        if (bonus_star_x > 64)
+        {
+            bonus_star_active = 0; // Deactivate the bonus star
+            bonus_star_x = 0;      // Reset x-coordinate
+            bonus_star_y = 0;      // Reset y-coordinate
+        }
+    }
+}
+
+// Function to check if the spaceship collected the bonus star
+void check_bonus_star_collection(void)
+{
+    if (bonus_star_active &&
+        x_position + 16 > bonus_star_x && x_position < bonus_star_x && // Spaceship's right side > Bonus star's left and left side < Bonus star's right
+        y_position + 16 > bonus_star_y && y_position < bonus_star_y)   // Spaceship's bottom side > Bonus star's top and top side < Bonus star's bottom
+    {
+        // Spaceship collected the bonus star
+        if (spaceship_health < 8) // Ensure health doesn't exceed 8
+        {
+            spaceship_health += 1; // Increase spaceship health by 1 (extra life)
+        }
+        bonus_star_active = 0; // Deactivate the bonus star
+        bonus_star_x = 0;      // Reset x-coordinate
+        bonus_star_y = 0;      // Reset y-coordinate
+
+        // Update the LEDs based on the new spaceship health
+        display_lives_with_leds();
+    }
+}
+
+void draw_bonus_star(void)
+{
+    if (bonus_star_active)
+    {
+        DrawBonusStar(bonus_star_x, bonus_star_y);
+    }
+}
+
+void render_bonus_star(void)
+{
+    check_bonus_star_collection();
+    update_bonus_star_position();
+    draw_bonus_star();
+}
+
 void handle_movement(void)
 {
 
@@ -315,6 +417,7 @@ void handle_movement(void)
     render_stars();
     render_aliens_and_ufos();
     render_bullets();
+    render_bonus_star();
 
     // Count remaining enemies
     int remaining_enemies = count_remaining_enemies();
