@@ -38,10 +38,10 @@ typedef struct
     int active; // Whether the bullet is active (0 for inactive, 1 for active)
 } Bullet;
 
-Bullet bullets[MAX_BULLETS]; // Array of bullets
+Bullet bullets[MAX_BULLETS]; 
 
 
-#define ALIEN_UFO_COUNT 5
+#define ALIEN_UFO_COUNT 8
 typedef struct {
     int x;
     int y;
@@ -50,3 +50,8 @@ typedef struct {
 } AlienUFO;
 
 AlienUFO alien_ufo_positions[ALIEN_UFO_COUNT];
+
+
+int spaceship_health = 3;
+
+int GAME_STATE = 1;

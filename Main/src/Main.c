@@ -65,28 +65,9 @@ void initialize_system(void)
 	UART_init();
 
 	init_graphics();
-
-
 }
 
 
-void turn_on_led(uint8_t led_number)
-{
-    if (led_number < 8) 
-    {
-        PORTB = ~(1 << led_number); 
-    }
-}
-
-void turn_on_all_leds(void)
-{
-	PORTB = 0x00;
-}
-
-void turn_off_all_leds(void)
-{
-	PORTB = 0xFF;
-}
 
 void main_loop(void)
 {
@@ -94,12 +75,15 @@ void main_loop(void)
 	UART_send_string("UART Communication Initialized...\n");
 	while (1)
 	{
-		if (is_joystick_button_pressed() )
+		if (GAME_STATE == 1)
 		{
-			fire_bullet();
-		}
+			if (is_joystick_button_pressed())
+			{
+				fire_bullet();
+			}
 
-		handle_movement();
+			handle_movement();
+		}
 	}
 }
 

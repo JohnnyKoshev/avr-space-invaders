@@ -55,6 +55,24 @@ void update_star_positions(void)
     }
 }
 
+void turn_on_led(uint8_t led_number)
+{
+    if (led_number < 8)
+    {
+        PORTB &= ~(1 << led_number);
+    }
+}
+
+void turn_on_all_leds(void)
+{
+    PORTB = 0x00;
+}
+
+void turn_off_all_leds(void)
+{
+    PORTB = 0xFF;
+}
+
 void draw_stars(void)
 {
     for (int i = 0; i < STAR_COUNT; i++)
@@ -72,13 +90,13 @@ void update_alien_ufo_positions(void)
 
         if (alien_ufo_positions[i].y < 0 || alien_ufo_positions[i].y > 116)
         {
-            alien_ufo_positions[i].speed *= -1; 
-            alien_ufo_positions[i].x += 10; 
+            alien_ufo_positions[i].speed *= -1;
+            alien_ufo_positions[i].x += 10;
         }
 
         if (alien_ufo_positions[i].x > 60)
         {
-            alien_ufo_positions[i].x = 5; 
+            alien_ufo_positions[i].x = 5;
         }
     }
 }
@@ -160,7 +178,7 @@ void fire_bullet(void)
         if (!bullets[i].active)
         {
             bullets[i].y = y_position + 8;
-            bullets[i].x = x_position;     
+            bullets[i].x = x_position;
             bullets[i].active = 1;
             break;
         }
@@ -173,7 +191,7 @@ void update_bullets(void)
     {
         if (bullets[i].active)
         {
-            bullets[i].x -= 2; 
+            bullets[i].x -= 2;
             if (bullets[i].x < 0)
             {
                 bullets[i].active = 0;
@@ -215,7 +233,32 @@ void render_bullets(void)
     update_bullets();
     draw_bullets();
 }
+void check_collisions_with_spaceship(void)
+{
+    for (int i = 0; i < ALIEN_UFO_COUNT; i++)
+    {
+        if (alien_ufo_positions[i].health > 0 &&
+            x_position >= alien_ufo_positions[i].x && x_position <= alien_ufo_positions[i].x + 10 &&
+            y_position >= alien_ufo_positions[i].y && y_position <= alien_ufo_positions[i].y + 10)
+        {
+            spaceship_health -= 1;             // Decrease spaceship health
+            alien_ufo_positions[i].health = 0; // Destroy the alien/UFO
+            alien_ufo_positions[i].x = -20;    // Move it off-screen
 
+            if (spaceship_health <= 0)
+            {
+                GAME_STATE = 0;
+                lcd_clear();
+                ScreenBuffer_clear();
+                // Display game over
+                lcd_string(30, 50, "GAME OVER");
+            }
+
+            // Update LED display based on the new health
+            display_lives_with_leds();
+        }
+    }
+}
 
 void init_graphics(void)
 {
@@ -227,23 +270,61 @@ void init_graphics(void)
 
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        alien_ufo_positions[i].x = rand() % 60;
-        alien_ufo_positions[i].y = 5 + (i * 10);
-        alien_ufo_positions[i].speed = (i % 2 == 0) ? 1 : -1; 
-        alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5; // UFOs have 2 health, Aliens have 3 health
+        alien_ufo_positions[i].x = 0; // Start at the top of the screen
+        alien_ufo_positions[i].y = 5 + (i * 16);
+        alien_ufo_positions[i].speed = (i % 2 == 0) ? 1 : -1;
+        alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5; // UFOs have 3 health, Aliens have 5 health
     }
 
     GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
     initialize_bullets();
+    display_lives_with_leds();
 }
 
+int count_remaining_enemies(void)
+{
+    int count = 0;
+    for (int i = 0; i < ALIEN_UFO_COUNT; i++)
+    {
+        if (alien_ufo_positions[i].health > 0)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+void display_lives_with_leds(void)
+{
+    // First, turn off all LEDs
+    turn_off_all_leds();
+
+    // Create a mask where the first 'spaceship_health' bits are set to 1
+    uint8_t led_mask = (1 << spaceship_health) - 1; // Set first 'spaceship_health' LEDs
+
+    // Set the LEDs by applying the mask
+    PORTB = ~led_mask; // Turn on the LEDs by clearing bits in PORTB
+
+    // This assumes the first LED corresponds to bit 0, the second to bit 1, etc.
+}
 
 void handle_movement(void)
 {
+
     render_spaceship();
     render_stars();
     render_aliens_and_ufos();
     render_bullets();
+
+    // Count remaining enemies
+    int remaining_enemies = count_remaining_enemies();
+
+    // Display the number of enemies left at x = 0
+    char enemy_count_str[20];
+    sprintf(enemy_count_str, "Enemies: %d", remaining_enemies);
+    lcd_string(0, 0, enemy_count_str); // Display at x = 0, y = 0
+
+    check_collisions_with_spaceship();
 
     _delay_ms(125);
 }
