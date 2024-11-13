@@ -1,5 +1,4 @@
 #include "config.h"
-#include "image_utils.c"
 #include "render.c"
 #include "init.c"
 #include <avr/io.h>

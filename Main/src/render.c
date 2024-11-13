@@ -1,5 +1,15 @@
+#include "config.h"
 #include "def.h"
 #include "_glcd.h"
+#include "led_utils.c"
+#include "image_utils.c"
+
+void display_lives_with_leds(void)
+{
+    turn_off_all_leds();
+    uint8_t led_mask = (1 << spaceship_health) - 1;
+    PORTB = ~led_mask;
+}
 
 void DrawStar(unsigned char x, unsigned char y)
 {
@@ -61,32 +71,6 @@ void update_star_positions(void)
     }
 }
 
-void turn_on_led(uint8_t led_number)
-{
-    if (led_number < 8)
-    {
-        PORTB &= ~(1 << led_number);
-    }
-}
-
-void turn_off_led(uint8_t led_number)
-{
-    if (led_number < 8)
-    {
-        PORTB |= (1 << led_number);
-    }
-}
-
-void turn_on_all_leds(void)
-{
-    PORTB = 0x00;
-}
-
-void turn_off_all_leds(void)
-{
-    PORTB = 0xFF;
-}
-
 void draw_stars(void)
 {
     for (int i = 0; i < STAR_COUNT; i++)
@@ -145,7 +129,7 @@ void update_spaceship_position(void)
 
     if (abs(joystick_y - 63) > JOYSTICK_DEAD_ZONE)
     {
-        y_position += (joystick_y > 63) ? 2 : -2; // change speed by changing the increment value
+        y_position += (joystick_y > 63) ? 2 : -2;
     }
 
     if (y_position > 112)
@@ -223,14 +207,15 @@ void update_bullets(void)
 
                     if (alien_ufo_positions[j].health <= 0)
                     {
-                        // Alien or UFO destroyed
-                        alien_ufo_positions[j].x = -20; // Move off-screen
+
+                        alien_ufo_positions[j].x = -20;
                     }
                 }
             }
         }
     }
 }
+
 void draw_bullets(void)
 {
     for (int i = 0; i < MAX_BULLETS; i++)
@@ -253,32 +238,30 @@ void check_collisions_with_spaceship(void)
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
         if (alien_ufo_positions[i].health > 0 &&
-            x_position >= alien_ufo_positions[i].x && x_position <= alien_ufo_positions[i].x + 10 &&
-            y_position >= alien_ufo_positions[i].y && y_position <= alien_ufo_positions[i].y + 10)
+            x_position + 15 >= alien_ufo_positions[i].x && x_position <= alien_ufo_positions[i].x + 15 &&
+            y_position + 15 >= alien_ufo_positions[i].y && y_position <= alien_ufo_positions[i].y + 15)
         {
-            // Check if it's an alien or a UFO and reduce health accordingly
-            if (i % 2 == 0) // UFO (even index)
+            if (i % 2 == 0)
             {
-                spaceship_health -= 1; // UFO reduces health by 1
+                spaceship_health -= 1;
             }
-            else // Alien (odd index)
+            else
             {
-                spaceship_health -= 2; // Alien reduces health by 2
+                spaceship_health -= 2;
             }
 
-            alien_ufo_positions[i].health = 0; // Destroy the alien/UFO
-            alien_ufo_positions[i].x = -20;    // Move it off-screen
+            alien_ufo_positions[i].health = 0;
+            alien_ufo_positions[i].x = -20;
 
             if (spaceship_health <= 0)
             {
                 GAME_STATE = 0;
                 lcd_clear();
                 ScreenBuffer_clear();
-                // Display game over
+
                 lcd_string(30, 50, "GAME OVER");
             }
 
-            // Update LED display based on the new health
             display_lives_with_leds();
         }
     }
@@ -294,10 +277,10 @@ void init_graphics(void)
 
     for (int i = 0; i < ALIEN_UFO_COUNT; i++)
     {
-        alien_ufo_positions[i].x = 0; // Start at the top of the screen
+        alien_ufo_positions[i].x = 0;
         alien_ufo_positions[i].y = 5 + (i * 16);
-        alien_ufo_positions[i].speed = (i % 2 == 0) ? 1 : -1;
-        alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5; // UFOs have 3 health, Aliens have 5 health
+        alien_ufo_positions[i].speed = (i % 2 == 0) ? 1 : -2;
+        alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5;
     }
 
     GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
@@ -318,20 +301,6 @@ int count_remaining_enemies(void)
     return count;
 }
 
-void display_lives_with_leds(void)
-{
-    // First, turn off all LEDs
-    turn_off_all_leds();
-
-    // Create a mask where the first 'spaceship_health' bits are set to 1
-    uint8_t led_mask = (1 << spaceship_health) - 1; // Set first 'spaceship_health' LEDs
-
-    // Set the LEDs by applying the mask
-    PORTB = ~led_mask; // Turn on the LEDs by clearing bits in PORTB
-
-    // This assumes the first LED corresponds to bit 0, the second to bit 1, etc.
-}
-
 void detect_light_intensity(void)
 {
     uint16_t light_value = Read_Adc_Data(2);
@@ -345,7 +314,6 @@ void detect_light_intensity(void)
     }
 }
 
-// Function to generate a bonus star
 void generate_bonus_star(void)
 {
 
@@ -356,41 +324,37 @@ void generate_bonus_star(void)
     bonus_star_active = 1;
 }
 
-// Function to update the position of the bonus star as it falls
 void update_bonus_star_position(void)
 {
     if (bonus_star_active)
     {
-        // Move the bonus star downwards
+
         bonus_star_x += BONUS_STAR_SPEED;
 
-        // If it reaches the bottom of the screen, reset it
         if (bonus_star_x > 64)
         {
-            bonus_star_active = 0; // Deactivate the bonus star
-            bonus_star_x = 0;      // Reset x-coordinate
-            bonus_star_y = 0;      // Reset y-coordinate
+            bonus_star_active = 0;
+            bonus_star_x = 0;
+            bonus_star_y = 0;
         }
     }
 }
 
-// Function to check if the spaceship collected the bonus star
 void check_bonus_star_collection(void)
 {
     if (bonus_star_active &&
-        x_position + 16 > bonus_star_x && x_position < bonus_star_x && // Spaceship's right side > Bonus star's left and left side < Bonus star's right
-        y_position + 16 > bonus_star_y && y_position < bonus_star_y)   // Spaceship's bottom side > Bonus star's top and top side < Bonus star's bottom
+        x_position + 16 > bonus_star_x && x_position < bonus_star_x &&
+        y_position + 16 > bonus_star_y && y_position < bonus_star_y)
     {
-        // Spaceship collected the bonus star
-        if (spaceship_health < 8) // Ensure health doesn't exceed 8
-        {
-            spaceship_health += 1; // Increase spaceship health by 1 (extra life)
-        }
-        bonus_star_active = 0; // Deactivate the bonus star
-        bonus_star_x = 0;      // Reset x-coordinate
-        bonus_star_y = 0;      // Reset y-coordinate
 
-        // Update the LEDs based on the new spaceship health
+        if (spaceship_health < 8)
+        {
+            spaceship_health += 1;
+        }
+        bonus_star_active = 0;
+        bonus_star_x = 0;
+        bonus_star_y = 0;
+
         display_lives_with_leds();
     }
 }
@@ -410,6 +374,14 @@ void render_bonus_star(void)
     draw_bonus_star();
 }
 
+void display_remaining_enemies(void)
+{
+    int remaining_enemies = count_remaining_enemies();
+    char enemy_count_str[20];
+    sprintf(enemy_count_str, "Enemies: %d", remaining_enemies);
+    lcd_string(0, 0, enemy_count_str);
+}
+
 void handle_movement(void)
 {
 
@@ -419,13 +391,7 @@ void handle_movement(void)
     render_bullets();
     render_bonus_star();
 
-    // Count remaining enemies
-    int remaining_enemies = count_remaining_enemies();
-
-    // Display the number of enemies left at x = 0
-    char enemy_count_str[20];
-    sprintf(enemy_count_str, "Enemies: %d", remaining_enemies);
-    lcd_string(0, 0, enemy_count_str); // Display at x = 0, y = 0
+    display_remaining_enemies();
 
     check_collisions_with_spaceship();
 
