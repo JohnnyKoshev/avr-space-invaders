@@ -20,29 +20,27 @@ unsigned int joystick_y;
 #define STAR_COUNT 5
 int star_positions[STAR_COUNT][2];
 
-
 int star_positions[STAR_COUNT][2];
-
 
 #define JOYSTICK_BUTTON_PIN PIND2
 #define JOYSTICK_BUTTON_PORT PORTD
 #define JOYSTICK_BUTTON_DDR DDRD
 #define JOYSTICK_BUTTON_PINR PIND
 
-#define MAX_BULLETS 3 // Max number of bullets on screen at once
+#define MAX_BULLETS 3
 
 typedef struct
 {
-    int x;      // Bullet's x-position
-    int y;      // Bullet's y-position
-    int active; // Whether the bullet is active (0 for inactive, 1 for active)
+    int x;
+    int y;
+    int active;
 } Bullet;
 
-Bullet bullets[MAX_BULLETS]; 
-
+Bullet bullets[MAX_BULLETS];
 
 #define ALIEN_UFO_COUNT 8
-typedef struct {
+typedef struct
+{
     int x;
     int y;
     int speed;
@@ -51,18 +49,28 @@ typedef struct {
 
 AlienUFO alien_ufo_positions[ALIEN_UFO_COUNT];
 
-
 int spaceship_health = 3;
 
 int GAME_STATE = 1;
 
-#define LIGHT_DETECTION_THRESHOLD 512  // Threshold for detecting light
-#define BONUS_STAR_X 30  // X-position for bonus star (or randomize it)
-#define BONUS_STAR_Y 60  // Y-position for bonus star (or randomize it)
-#define DEBOUNCE_DELAY 500  // Delay in milliseconds for debounce
+#define LIGHT_DETECTION_THRESHOLD 512
+#define BONUS_STAR_X 30
+#define BONUS_STAR_Y 60
+#define DEBOUNCE_DELAY 500
+#define BONUS_STAR_SPEED 1
 
-#define BONUS_STAR_SPEED 1   // Speed at which the bonus star falls
+static int bonus_star_x = 0;
+static int bonus_star_y = 0;
+static int bonus_star_active = 0;
 
-static int bonus_star_x = 0;  // Bonus star starting from the top (x = 0)
-static int bonus_star_y = 0;  // Randomized starting y position for the bonus star
-static int bonus_star_active = 0;  // Flag to track if the bonus star is active
+unsigned int Count_Of_Timer2 = 0;
+unsigned int Task1_Of_Timer2 = 0;
+unsigned int Time_Of_Timer2 = 500;
+
+volatile uint16_t game_time_seconds = 0;
+volatile uint16_t count_of_timer2 = 0;
+volatile uint16_t time_of_timer2 = 1000;
+
+uint16_t enemies_destroyed = 0;
+uint16_t time_spent = 0;
+uint16_t bonus_stars_collected = 0;

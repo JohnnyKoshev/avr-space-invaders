@@ -25,10 +25,9 @@
 #include "_buzzer.h"
 #include "_adc.h"
 #include "_eeprom.h"
-#include "_init.h"
 #include "_interrupt.h"
 #include "_port.h"
-#include "_timer2.h"
+// #include "_timer2.h"
 #include "_uart.h"
 #include "_glcd.h"
 

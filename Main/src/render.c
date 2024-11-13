@@ -207,8 +207,8 @@ void update_bullets(void)
 
                     if (alien_ufo_positions[j].health <= 0)
                     {
-
                         alien_ufo_positions[j].x = -20;
+                        enemies_destroyed++;
                     }
                 }
             }
@@ -258,8 +258,7 @@ void check_collisions_with_spaceship(void)
                 GAME_STATE = 0;
                 lcd_clear();
                 ScreenBuffer_clear();
-
-                lcd_string(30, 50, "GAME OVER");
+                lcd_string(4, 6, "GAME OVER!");
             }
 
             display_lives_with_leds();
@@ -269,6 +268,8 @@ void check_collisions_with_spaceship(void)
 
 void init_graphics(void)
 {
+    lcd_clear();
+    ScreenBuffer_clear();
     for (int i = 0; i < STAR_COUNT; i++)
     {
         star_positions[i][0] = 5 + rand() % 60;
@@ -346,7 +347,6 @@ void check_bonus_star_collection(void)
         x_position + 16 > bonus_star_x && x_position < bonus_star_x &&
         y_position + 16 > bonus_star_y && y_position < bonus_star_y)
     {
-
         if (spaceship_health < 8)
         {
             spaceship_health += 1;
@@ -355,6 +355,7 @@ void check_bonus_star_collection(void)
         bonus_star_x = 0;
         bonus_star_y = 0;
 
+        bonus_stars_collected++;
         display_lives_with_leds();
     }
 }
@@ -382,6 +383,31 @@ void display_remaining_enemies(void)
     lcd_string(0, 0, enemy_count_str);
 }
 
+void display_remaining_time(void)
+{
+    char time_str[20];
+    uint16_t time_remaining = 60 - game_time_seconds;
+    sprintf(time_str, " Time: %ds", time_remaining);
+    lcd_string(0, 10, time_str);
+}
+
+void check_game_win(void)
+{
+    if (count_remaining_enemies() == 0)
+    {
+        GAME_STATE = 0; 
+        lcd_clear();
+        ScreenBuffer_clear();
+        lcd_string(4, 6, "YOU WIN!");
+        enemies_destroyed = ALIEN_UFO_COUNT;
+        if (spaceship_health < 0)
+        {
+            spaceship_health = 0;
+        }
+        turn_off_all_leds();
+    }
+}
+
 void handle_movement(void)
 {
     detect_light_intensity();
@@ -393,8 +419,10 @@ void handle_movement(void)
     render_bonus_star();
 
     display_remaining_enemies();
+    display_remaining_time();
 
     check_collisions_with_spaceship();
 
+    check_game_win();
     _delay_ms(125);
 }

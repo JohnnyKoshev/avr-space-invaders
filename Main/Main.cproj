@@ -183,12 +183,6 @@
     <Compile Include="include\_glcd.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\_init.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="include\_init.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="include\_interrupt.c">
       <SubType>compile</SubType>
     </Compile>
@@ -202,12 +196,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\_port.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="include\_timer2.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="include\_timer2.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\_uart.c">
