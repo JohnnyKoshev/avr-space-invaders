@@ -384,6 +384,7 @@ void display_remaining_enemies(void)
 
 void handle_movement(void)
 {
+    detect_light_intensity();
 
     render_spaceship();
     render_stars();

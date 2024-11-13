@@ -62,7 +62,6 @@ void main_loop(void)
 	UART_send_string("UART Communication Initialized...\n");
 	while (1)
 	{
-		detect_light_intensity();
 		if (GAME_STATE == 1)
 		{
 			if (is_joystick_button_pressed())
