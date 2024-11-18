@@ -81,6 +81,6 @@ volatile uint16_t game_time_seconds = 0;
 volatile uint16_t count_of_timer2 = 0;
 volatile uint16_t time_of_timer2 = 1000;
 
-uint16_t enemies_destroyed = 5;
-uint16_t time_spent = 5;
-uint16_t bonus_stars_collected = 5;
+int enemies_destroyed = 0;
+int time_spent = 0;
+int bonus_stars_collected = 0;

@@ -5,6 +5,7 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <string.h>
+#include <avr/eeprom.h>
 
 #define MAX_BUFFER_SIZE 1024
 static int is_start_cmd_received = 0;
@@ -13,53 +14,10 @@ static int last_cmd_was_stats = 0;
 static int is_init_graphics = 0;
 static int is_start_menu_shown = 0;
 
-#define EEPROM_ADDR_ENEMIES_DESTROYED 0
-#define EEPROM_ADDR_TIME_SPENT 2
-#define EEPROM_ADDR_BONUS_COLLECTED 4
-#define EEPROM_ADDR_SPACESHIP_HEALTH 6
-
-void save_stats_to_eeprom()
-{
-	eeprom_update_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED, enemies_destroyed);
-	eeprom_update_word((uint16_t *)EEPROM_ADDR_TIME_SPENT, time_spent);
-	eeprom_update_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED, bonus_stars_collected);
-	eeprom_update_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH, spaceship_health);
-}
-
-void load_stats_from_eeprom()
-{
-	// Check if the EEPROM value for enemies destroyed is uninitialized
-	enemies_destroyed = eeprom_read_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED);
-	if (enemies_destroyed == 0xFFFF)
-	{
-		enemies_destroyed = 0; // Assign default value
-	}
-
-	// Check if the EEPROM value for time spent is uninitialized
-	time_spent = eeprom_read_word((uint16_t *)EEPROM_ADDR_TIME_SPENT);
-	if (time_spent == 0xFFFF)
-	{
-		time_spent = 0; // Assign default value
-	}
-
-	// Check if the EEPROM value for bonus stars collected is uninitialized
-	bonus_stars_collected = eeprom_read_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED);
-	if (bonus_stars_collected == 0xFFFF)
-	{
-		bonus_stars_collected = 0; // Assign default value
-	}
-
-	// Check if the EEPROM value for spaceship health is uninitialized
-	spaceship_health = eeprom_read_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH);
-	if (spaceship_health == 0xFFFF)
-	{
-		spaceship_health = 3; // Assign default value (example: full health)
-	}
-}
-
 void reset_microcontroller()
 {
-	save_stats_to_eeprom();
+	// clear_stats();
+	save_stats_to_eeprom(enemies_destroyed, time_spent, bonus_stars_collected, spaceship_health);
 	wdt_enable(WDTO_15MS);
 	while (1)
 		;
@@ -110,6 +68,8 @@ void process_received_cmd(char *cmd)
 		}
 		else
 		{
+			load_stats_from_eeprom(&enemies_destroyed, &time_spent, &bonus_stars_collected, &spaceship_health);
+
 			char enemies_destroyed_str[20];
 			sprintf(enemies_destroyed_str, "Enemies Destroyed: %d", enemies_destroyed);
 
@@ -148,6 +108,8 @@ void process_received_cmd(char *cmd)
 			lcd_string(4, 0, bonus_stars_collected_str);
 			lcd_string(5, 0, spaceship_health_str);
 
+			// clear_stats();
+			save_stats_to_eeprom(enemies_destroyed, time_spent, bonus_stars_collected, spaceship_health);
 			last_cmd_was_stats = 1;
 		}
 	}
@@ -155,7 +117,7 @@ void process_received_cmd(char *cmd)
 	{
 		if (GAME_STATE == 0 || GAME_STATE == -1)
 		{
-			UART1_send_string("The game is not running.\n");
+			UART1_send_string("\nThe game is not running.\n");
 			return;
 		}
 		lcd_clear();
@@ -219,7 +181,8 @@ SIGNAL(TIMER2_OVF_vect)
 				GAME_STATE = 0;
 				lcd_clear();
 				ScreenBuffer_clear();
-				save_stats_to_eeprom();
+				// clear_stats();
+				save_stats_to_eeprom(enemies_destroyed, time_spent, bonus_stars_collected, spaceship_health);
 				lcd_string(4, 1, "TIME UP! GAME OVER");
 				if (spaceship_health < 0)
 				{
@@ -248,7 +211,7 @@ void main_loop(void)
 				lcd_string(7, 1, "Press Push Button");
 				is_start_menu_shown = 1;
 			}
-			if (is_joystick_button_pressed())
+			if (is_joystick_button_pressed() && last_cmd_was_stats != 1)
 			{
 				GAME_STATE = 1;
 			}
@@ -275,7 +238,8 @@ void main_loop(void)
 				lcd_clear();
 				ScreenBuffer_clear();
 				turn_off_all_leds();
-				save_stats_to_eeprom();
+				// clear_stats();
+				save_stats_to_eeprom(enemies_destroyed, time_spent, bonus_stars_collected, spaceship_health);
 				lcd_string(4, 1, "YOU QUIT THE GAME!");
 			}
 			else if (is_start_cmd_received == 1)
@@ -290,24 +254,9 @@ void main_loop(void)
 	}
 }
 
-void clear_stats()
-{
-	// Clear enemies destroyed count
-	eeprom_write_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED, 0xFFFF); // Default uninitialized value
-
-	// Clear time spent
-	eeprom_write_word((uint16_t *)EEPROM_ADDR_TIME_SPENT, 0xFFFF); // Default uninitialized value
-
-	// Clear bonus stars collected
-	eeprom_write_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED, 0xFFFF); // Default uninitialized value
-
-	// Clear spaceship health
-	eeprom_write_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH, 0xFFFF); // Default uninitialized value
-}
-
 void main(void)
 {
 	initialize_devices();
-	load_stats_from_eeprom();
+	load_stats_from_eeprom(&enemies_destroyed, &time_spent, &bonus_stars_collected, &spaceship_health);
 	main_loop();
 }

@@ -3,8 +3,68 @@
 #include "_glcd.h"
 #include "led_utils.c"
 #include "image_utils.c"
+#include <avr/eeprom.h>
 
-void display_lives_with_leds(void)
+#define EEPROM_ADDR_ENEMIES_DESTROYED 0
+#define EEPROM_ADDR_TIME_SPENT 2
+#define EEPROM_ADDR_BONUS_COLLECTED 4
+#define EEPROM_ADDR_SPACESHIP_HEALTH 6
+
+void save_stats_to_eeprom(int enemies_destroyed, int time_spent, int bonus_stars_collected, int spaceship_health)
+{
+    eeprom_update_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED, enemies_destroyed);
+    eeprom_update_word((uint16_t *)EEPROM_ADDR_TIME_SPENT, time_spent);
+    eeprom_update_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED, bonus_stars_collected);
+    eeprom_update_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH, spaceship_health);
+}
+
+void load_stats_from_eeprom(int *enemies_destroyed, int *time_spent, int *bonus_stars_collected, int *spaceship_health)
+{
+    // Check if the EEPROM value for enemies destroyed is uninitialized
+    *enemies_destroyed = eeprom_read_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED);
+    // if (*enemies_destroyed == 0xFFFF)
+    // {
+    //     *enemies_destroyed = 0; // Assign default value
+    // }
+
+    // Check if the EEPROM value for time spent is uninitialized
+    *time_spent = eeprom_read_word((uint16_t *)EEPROM_ADDR_TIME_SPENT);
+    // if (*time_spent == 0xFFFF)
+    // {
+    //     *time_spent = 0; // Assign default value
+    // }
+
+    // Check if the EEPROM value for bonus stars collected is uninitialized
+    *bonus_stars_collected = eeprom_read_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED);
+    // if (*bonus_stars_collected == 0xFFFF)
+    // {
+    //     *bonus_stars_collected = 0; // Assign default value
+    // }
+
+    // Check if the EEPROM value for spaceship health is uninitialized
+    *spaceship_health = eeprom_read_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH);
+    // if (*spaceship_health == 0xFFFF)
+    // {
+    //     *spaceship_health = 3; // Assign default value
+    // }
+}
+
+void clear_stats()
+{
+    // Clear enemies destroyed count
+    eeprom_write_word((uint16_t *)EEPROM_ADDR_ENEMIES_DESTROYED, 0); // Default uninitialized value
+
+    // Clear time spent
+    eeprom_write_word((uint16_t *)EEPROM_ADDR_TIME_SPENT, 0); // Default uninitialized value
+
+    // Clear bonus stars collected
+    eeprom_write_word((uint16_t *)EEPROM_ADDR_BONUS_COLLECTED, 0); // Default uninitialized value
+
+    // Clear spaceship health
+    eeprom_write_word((uint16_t *)EEPROM_ADDR_SPACESHIP_HEALTH, 3); // Default uninitialized value
+}
+
+void display_lives_with_leds(spaceship_health)
 {
     turn_off_all_leds();
     uint8_t led_mask = (1 << spaceship_health) - 1;
@@ -253,15 +313,7 @@ void check_collisions_with_spaceship(void)
             alien_ufo_positions[i].health = 0;
             alien_ufo_positions[i].x = -20;
 
-            if (spaceship_health <= 0)
-            {
-                GAME_STATE = 0;
-                lcd_clear();
-                ScreenBuffer_clear();
-                lcd_string(4, 6, "GAME OVER!");
-            }
-
-            display_lives_with_leds();
+            display_lives_with_leds(spaceship_health);
         }
     }
 }
@@ -284,9 +336,11 @@ void init_graphics(void)
         alien_ufo_positions[i].health = (i % 2 == 0) ? 3 : 5;
     }
 
+    bonus_stars_collected = 0;
+    spaceship_health = 3;
     GLCD_DrawImageWithRotation(x_position, y_position, spaceShip16n16, 16, 16, ROTATE_90);
     initialize_bullets();
-    display_lives_with_leds();
+    display_lives_with_leds(spaceship_health);
 }
 
 int count_remaining_enemies(void)
@@ -356,7 +410,7 @@ void check_bonus_star_collection(void)
         bonus_star_y = 0;
 
         bonus_stars_collected++;
-        display_lives_with_leds();
+        display_lives_with_leds(spaceship_health);
     }
 }
 
@@ -395,7 +449,7 @@ void check_game_win(void)
 {
     if (count_remaining_enemies() == 0)
     {
-        GAME_STATE = 0; 
+        GAME_STATE = 0;
         lcd_clear();
         ScreenBuffer_clear();
         lcd_string(4, 6, "YOU WIN!");
@@ -404,12 +458,27 @@ void check_game_win(void)
         {
             spaceship_health = 0;
         }
+
+        // clear_stats();
+
         turn_off_all_leds();
     }
 }
 
 void handle_movement(void)
 {
+
+    if (spaceship_health <= 0)
+    {
+        GAME_STATE = 0;
+        lcd_clear();
+        ScreenBuffer_clear();
+        lcd_string(4, 6, "GAME OVER!");
+        // clear_stats();
+        save_stats_to_eeprom(enemies_destroyed, time_spent, bonus_stars_collected, spaceship_health);
+        return;
+    }
+
     detect_light_intensity();
 
     render_spaceship();
@@ -424,5 +493,6 @@ void handle_movement(void)
     check_collisions_with_spaceship();
 
     check_game_win();
+
     _delay_ms(125);
 }
