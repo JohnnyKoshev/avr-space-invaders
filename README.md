@@ -39,7 +39,7 @@ This repository contains the source code for a **Space Invaders** game implement
 
 4. **Run the game**:
    - Connect the joystick and LCD to the Atmega128 board.
-   - Power on the device and connect via COM port to your PC to start the game 
+   - Power on the device and connect via COM port to your PC to start the game.
 
 ## Optional: Set Up Visual Studio Code for Development
 
@@ -54,6 +54,26 @@ This setup will allow you to develop, build, and debug the project efficiently i
 - **2**: View stats from the previous game.
 - **3**: Quit the current game.
 
+## Images and Visuals
+
+Below are some visuals to help you understand the game setup and features.
+
+### 1. Main Features Overview
+![Main Features](images/main.png)  
+*Illustration of the main page.*
+
+### 2. Serial Communication Setup
+![Serial Communication Setup](images/serial_communication.png)  
+*Showcasing the sample serial communication process between the Atmega128 microcontroller and PC.*
+
+### 3. Game in Action
+![Game Running](images/game.png)  
+*Example of the game running with all components connected, including joystick and LCD.*
+
+### 4. Player Stats Display
+![Player Stats](images/stats.png)  
+*Visual representation of player stats displayed.*
+
 ## Contributing
 
 Contributions, bug reports, and feature requests are welcome! Feel free to open an issue or submit a pull request.
@@ -62,7 +82,4 @@ Contributions, bug reports, and feature requests are welcome! Feel free to open 
 
 Enjoy playing **Space Invaders** on your Atmega128! 🎮
 
-
-
-
-
+---
