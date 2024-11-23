@@ -176,7 +176,7 @@ SIGNAL(TIMER2_OVF_vect)
 			game_time_seconds++;
 			time_spent = game_time_seconds;
 
-			if (game_time_seconds >= 60)
+			if (game_time_seconds >= 60)	
 			{
 				GAME_STATE = 0;
 				lcd_clear();
